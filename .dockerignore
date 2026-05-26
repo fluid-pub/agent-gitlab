@@ -1,0 +1,10 @@
+.git
+.github
+.githooks
+dist
+build
+env.secrets
+config/agent.yml
+*.md
+!README.md
+scripts

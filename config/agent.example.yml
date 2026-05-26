@@ -1,0 +1,112 @@
+# GitLab execution agent: API skills and local git checkout for MR context (see README).
+# service_credentials: local (default) | control_plane
+service_credentials: local
+
+agent:
+  name: "gitlab-exec"
+  version: "0.1.0"
+  mode: "execution"
+
+gitlab:
+  url: "${GITLAB_URL}"
+  token: "${GITLAB_TOKEN}"
+  api_version: "v4"
+  project_path: "${GITLAB_PROJECT_PATH}"
+  target_branch: "main"
+
+controlplane:
+  websocket_url: "${FLUID_CONTROLPLANE_WEBSOCKET_URL}"
+  organization_uuid: "${FLUID_CONTROLPLANE_ORGANIZATION_UUID}"
+  token: "${FLUID_CONTROLPLANE_TOKEN}"
+
+logs:
+  enabled: true
+  verbosity: "normal"
+
+skills:
+  allowed:
+    - gitlab.create_branch
+    - gitlab.commit_files
+    - gitlab.create_mr
+    - gitlab.agent.health
+    - gitlab.merge_request.approval_status
+    - gitlab.merge_request.status
+    - gitlab.merge_request.approve
+    - gitlab.merge_request.merge
+    - gitlab.merge_request.assert_merged
+    - gitlab.repo.checkout_mr
+  definitions:
+    gitlab.create_branch:
+      result:
+        type: object
+        properties:
+          branch: { type: string }
+    gitlab.commit_files:
+      result:
+        type: object
+    gitlab.create_mr:
+      result:
+        type: object
+        properties:
+          mr_url: { type: string }
+    gitlab.agent.health:
+      result:
+        type: object
+        properties:
+          connected: { type: boolean }
+    gitlab.merge_request.approval_status:
+      result:
+        type: object
+        properties:
+          merge_request_iid: { type: integer }
+          approved_by_current_user: { type: boolean }
+          current_user_id: { type: integer }
+          current_username: { type: string }
+    gitlab.merge_request.status:
+      result:
+        type: object
+        properties:
+          exists: { type: boolean }
+          merge_request_iid: { type: integer }
+          iid: { type: integer }
+          web_url: { type: string }
+          state: { type: string }
+          detailed_merge_status: { type: string }
+          merge_error: { type: string }
+    gitlab.merge_request.approve:
+      result:
+        type: object
+        properties:
+          iid: { type: integer }
+          web_url: { type: string }
+          state: { type: string }
+    gitlab.merge_request.merge:
+      result:
+        type: object
+        properties:
+          iid: { type: integer }
+          web_url: { type: string }
+          state: { type: string }
+    gitlab.merge_request.assert_merged:
+      result:
+        type: object
+        properties:
+          iid: { type: integer }
+          web_url: { type: string }
+          state: { type: string }
+    gitlab.repo.checkout_mr:
+      with:
+        type: object
+        properties:
+          run_as:
+            type: string
+            description: Optional POSIX login. When the agent runs as root, git uses that uid/gid. Ignored for chown when set.
+          chown_repo_to:
+            type: string
+            description: Optional POSIX login. After checkout (if run_as unset), chown -R under /tmp/fluid/ workspace paths.
+      result:
+        type: object
+        properties:
+          target_path: { type: string }
+          merge_request_iid: { type: integer }
+          ref: { type: string }
