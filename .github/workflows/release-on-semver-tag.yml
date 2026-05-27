@@ -1,0 +1,21 @@
+name: Release on semver tag
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    uses: fluid-pub/actions/.github/workflows/go-workload-release.yml@v1
+    with:
+      workload_kind: agent
+      binary_name: fluid-agent-gitlab
+      core_repository: fluid-pub/agent-core
+      # Pin agent-core until matching semver tags exist for both repos (see agent-core 0.1.1).
+      core_ref: "0.1.1"
