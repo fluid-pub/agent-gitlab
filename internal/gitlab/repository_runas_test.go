@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
@@ -35,5 +36,25 @@ func TestHTTPSGitRemoteURL_doesNotEmbedToken(t *testing.T) {
 	}
 	if remote != "https://gitlab.com/constellio/infrastructure.git" {
 		t.Fatalf("unexpected remote: %s", remote)
+	}
+}
+
+func TestParseUint32ID_outOfRange(t *testing.T) {
+	_, err := parseUint32ID("uid", "4294967296")
+	if err == nil {
+		t.Fatal("expected out-of-range error")
+	}
+	if !strings.Contains(err.Error(), "uid") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestParseUint32ID_validMax(t *testing.T) {
+	got, err := parseUint32ID("gid", "4294967295")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != math.MaxUint32 {
+		t.Fatalf("unexpected gid: %d", got)
 	}
 }

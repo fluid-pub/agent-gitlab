@@ -73,15 +73,15 @@ func newGitCmd(runAs string, gitArgs ...string) (*exec.Cmd, error) {
 	if err != nil {
 		return nil, fmt.Errorf("run_as: unknown user %q: %w", runAs, err)
 	}
-	uid, err := strconv.Atoi(urec.Uid)
+	uid, err := parseUint32ID("uid", urec.Uid)
 	if err != nil {
-		return nil, fmt.Errorf("run_as: uid: %w", err)
+		return nil, fmt.Errorf("run_as: %w", err)
 	}
-	gid, err := strconv.Atoi(urec.Gid)
+	gid, err := parseUint32ID("gid", urec.Gid)
 	if err != nil {
-		return nil, fmt.Errorf("run_as: gid: %w", err)
+		return nil, fmt.Errorf("run_as: %w", err)
 	}
-	euid := os.Geteuid()
+	euid := uint32(os.Geteuid())
 	if euid != 0 {
 		if euid != uid {
 			return nil, fmt.Errorf("run_as=%q requires a root gitlab agent (euid=%d)", runAs, euid)
@@ -94,10 +94,18 @@ func newGitCmd(runAs string, gitArgs ...string) (*exec.Cmd, error) {
 			cmd.Env = envForGitIdentity(os.Environ(), urec.Username, h)
 		}
 		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Credential: &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)},
+			Credential: &syscall.Credential{Uid: uid, Gid: gid},
 		}
 	}
 	return cmd, nil
+}
+
+func parseUint32ID(kind, value string) (uint32, error) {
+	parsed, err := strconv.ParseUint(strings.TrimSpace(value), 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", kind, err)
+	}
+	return uint32(parsed), nil
 }
 
 func gitCombinedOutput(runAs string, gitArgs ...string) ([]byte, error) {
@@ -115,7 +123,7 @@ func gitCombinedOutputWithAuth(runAs, authHeader string, gitArgs ...string) ([]b
 
 // CheckoutMergeRequestHead materializes the MR tip in targetPath using local git against GitLab HTTPS.
 // Uses GitLab fetch ref merge-requests/<IID>/head (same-repo MRs).
-// When runAs is non-empty and the agent is root, git runs with that POSIX login (Credential); the repo parent dir must be writable by that user (e.g. linux.workspace.prepare workspace_owner).
+// When runAs is non-empty and the agent is root, git runs with that POSIX login (Credential); the repo parent dir must be writable by that user (e.g. debian.workspace.prepare workspace_owner).
 func CheckoutMergeRequestHead(host, projectPath, token, targetPath string, mrIID int, runAs string) error {
 	if strings.TrimSpace(host) == "" || strings.TrimSpace(projectPath) == "" || strings.TrimSpace(token) == "" {
 		return fmt.Errorf("host, project_path and token are required")
