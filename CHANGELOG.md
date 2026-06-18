@@ -9,6 +9,11 @@ Tag naming: `0.y.z` (no `v` prefix). Align `cmd/version.go` and `config/agent.ex
 
 ## [Unreleased]
 
+### Changed
+
+- `gitlab.create_branch`, `gitlab.commit_files`, and `gitlab.create_mr` honor `project_path` in the skill payload (fallback to agent config when omitted).
+- `gitlab.commit_files`: when an action includes `append_content`, the agent loads the file at `file_path` on the target branch, appends the block, and commits the merged body (avoids replacing the file with RAG-assembled snapshots).
+
 ## [0.1.0] - 2026-05-26
 
 ### Added

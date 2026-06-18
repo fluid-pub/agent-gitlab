@@ -118,12 +118,13 @@ func (a *Agent) execute(skill string, payload map[string]interface{}, _ map[stri
 
 	switch skill {
 	case "gitlab.create_branch":
+		projectPath := stringFromPayload(payload, "project_path", a.cfg.GitLab.ProjectPath)
 		branch, _ := payload["branch"].(string)
 		ref, _ := payload["ref"].(string)
 		if ref == "" {
 			ref = a.cfg.GitLab.TargetBranch
 		}
-		if err := a.gitlab.CreateBranch(a.cfg.GitLab.ProjectPath, branch, ref); err != nil {
+		if err := a.gitlab.CreateBranch(projectPath, branch, ref); err != nil {
 			return nil, err
 		}
 		return skillresult.Success(map[string]interface{}{"branch": branch}), nil
@@ -138,7 +139,8 @@ func (a *Agent) execute(skill string, payload map[string]interface{}, _ map[stri
 				normalized = append(normalized, m)
 			}
 		}
-		if err := a.gitlab.CommitFiles(a.cfg.GitLab.ProjectPath, branch, message, normalized); err != nil {
+		projectPath := stringFromPayload(payload, "project_path", a.cfg.GitLab.ProjectPath)
+		if err := a.gitlab.CommitFiles(projectPath, branch, message, normalized); err != nil {
 			return nil, err
 		}
 		return skillresult.Success(map[string]interface{}{}), nil
@@ -151,7 +153,8 @@ func (a *Agent) execute(skill string, payload map[string]interface{}, _ map[stri
 		}
 		title, _ := payload["title"].(string)
 		description, _ := payload["description"].(string)
-		url, err := a.gitlab.CreateMergeRequest(a.cfg.GitLab.ProjectPath, source, target, title, description)
+		projectPath := stringFromPayload(payload, "project_path", a.cfg.GitLab.ProjectPath)
+		url, err := a.gitlab.CreateMergeRequest(projectPath, source, target, title, description)
 		if err != nil {
 			return nil, err
 		}
