@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Fluid GitLab execution agent — git and chown required for gitlab.repo.checkout_mr.
 
-FROM golang:1.26-bookworm AS build
+FROM golang:1.27-bookworm AS build
 
 ARG BINARY_NAME=fluid-agent-gitlab
 ARG VERSION=0.0.0
